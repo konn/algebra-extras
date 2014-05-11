@@ -1,5 +1,6 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses, RankNTypes, UndecidableInstances         #-}
+{-# LANGUAGE CPP, ConstraintKinds, FlexibleContexts, FlexibleInstances     #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, MultiParamTypeClasses, RankNTypes #-}
+{-# LANGUAGE UndecidableInstances                                          #-}
 module Numeric.Algebra.Domain.Euclidean (Euclidean(..), gcd', leadingUnit, normalize) where
 import           Control.Arrow
 import           Control.Lens
@@ -63,7 +64,10 @@ class (DecidableZero r, DecidableUnits r, Domain r) => Euclidean r where
               s''       = (s - q * s') * u
               t''       = (t - q * t') * u
           in step ((r'', s'', t'') : acc)
+
+#if (__GLASGOW_HASKELL__ > 708)
   {-# MINIMAL splitUnit, degree, divide #-}
+#endif
 
 gcd' :: Euclidean r => [r] -> r
 gcd' []     = one
@@ -87,4 +91,3 @@ instance Euclidean Integer where
 
   divide = P.divMod
   {-# INLINE divide #-}
-
