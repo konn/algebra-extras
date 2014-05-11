@@ -1,22 +1,28 @@
 module Numeric.Algebra.Domain.Euclidean where
+import           Control.Arrow
 import           Control.Lens
 import           Numeric.Algebra
 import           Numeric.Algebra.Domain
+import           Numeric.Decidable.Units
 import           Numeric.Decidable.Zero
-import           Prelude                (Eq (..), Maybe (..), abs, fst, head,
-                                         otherwise, snd, (.))
-import           Prelude                (Integer, fromIntegral, ($))
-import qualified Prelude                as P
+import           Prelude                 (Eq (..), Maybe (..), abs, fst, head,
+                                          otherwise, signum, snd, (.))
+import           Prelude                 (Integer, fromIntegral, ($))
+import qualified Prelude                 as P
 
 infixl 7 `quot`, `rem`
 infix  7 `divide`
-class (DecidableZero r, Domain r) => Euclidean r where
+class (DecidableZero r, DecidableUnits r, Domain r) => Euclidean r where
+  -- | @splitUnit r@ calculates its leading unit and normal form.
+  --
+  -- prop> splitUnit r == (u, n) ==> r == u * n && fst (splitUnit n) == one && isUnit u
+  splitUnit :: r -> (r, r)
   -- | Euclidean (degree) function on @r@.
   degree :: r -> Maybe Natural
   -- | Division algorithm. @a `divide` b@ calculates
   --   quotient and reminder of @a@ divided by @b@.
   --
-  -- prop> divide a p == (q, r) ==> p*q + r == a && degree r < degree q
+  -- prop> let (q, r) = divide a p in p*q + r == a && degree r < degree q
   divide :: r                   -- ^ elements divided by
          -> r                   -- ^ divisor
          -> (r,r)               -- ^ quotient and remin
@@ -31,18 +37,32 @@ class (DecidableZero r, Domain r) => Euclidean r where
   --
   -- prop> euclid f g == xs ==> all (\(r, s, t) -> r == f * s + g * t) xs
   euclid :: r -> r -> [(r,r,r)]
-  euclid f g = step [(g, zero, one), (f, one, zero)]
+  euclid f g =
+    let (ug, g') = splitUnit g
+        Just t'  = recipUnit ug
+        (uf, f') = splitUnit f
+        Just s   = recipUnit uf
+    in step [(g', zero, t'), (f', s, zero)]
     where
       step acc @ ((r',s',t'):(r,s,t):_)
         | isZero r' = P.tail acc
         | otherwise =
-          let q   = r `quot` r'
-              r'' = r - q * r'
-              s'' = s - q * s'
-              t'' = t - q * t'
+          let q         = r `quot` r'
+              (ur, r'') = splitUnit $ r - q * r'
+              Just u    = recipUnit ur
+              s''       = (s - q * s') * u
+              t''       = (t - q * t') * u
           in step ((r'', s'', t'') : acc)
-  {-# MINIMAL degree, divide #-}
+  {-# MINIMAL splitUnit, degree, divide #-}
+
+normalize :: Euclidean r => r -> r
+normalize = snd . splitUnit
+
+leadingUnit :: Euclidean r => r -> r
+leadingUnit = fst . splitUnit
 
 instance Euclidean Integer where
+  splitUnit 0 = (1, 0)
+  splitUnit n = (signum n, abs n)
   degree = Just . fromIntegral . abs
   divide = P.divMod
