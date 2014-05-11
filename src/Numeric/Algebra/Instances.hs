@@ -2,22 +2,17 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TypeSynonymInstances #-}
 {-# LANGUAGE UndecidableInstances                                           #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Numeric.Algebra.Instances () where
-import qualified Data.Complex            as C
 import           Data.Function
-import           Data.Ord
 import           Data.Ratio
 import           Numeric.Algebra
 import qualified Numeric.Algebra.Complex as NA
-import           Numeric.Algebra.Domain
 import           Numeric.Decidable.Units
 import           Numeric.Decidable.Zero
 import           Prelude                 hiding (negate, subtract, (*), (+),
                                           (-))
 import qualified Prelude                 as P
-
-instance Domain Integer
-instance (Integral r, Domain r) => Domain (Ratio r)
 
 instance Integral n => InvolutiveMultiplication (Ratio n) where
   adjoint = id
@@ -40,12 +35,6 @@ instance (P.Num n) => P.Num (NA.Complex n) where
   negate (NA.Complex x y) = NA.Complex (P.negate x) (P.negate y)
   NA.Complex x y + NA.Complex z w = NA.Complex (x P.+ y) (z P.+ w)
   NA.Complex x y * NA.Complex z w = NA.Complex (x P.* z P.- y P.* w) (x P.* w P.+ y P.* z)
-
-instance (Domain r, Integral r) => Division (Ratio r) where
-  recip = P.recip
-  (/)   = (P./)
-  (\\)  = flip (P./)
-  (^)   = (^^)
 
 instance Integral n => Commutative (Ratio n)
 
