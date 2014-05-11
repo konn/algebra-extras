@@ -20,7 +20,8 @@ library
                        Numeric.Algebra.Domain.Euclidean
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       lens >= 3.9.2,
+  build-depends:       reflection >= 1.4,
+                       lens >= 3.9.2,
                        base    >=4.6 && <4.7
                ,       algebra >= 3.1
   hs-source-dirs:      src
